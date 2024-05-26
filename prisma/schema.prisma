@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountType {
+  USER
+  STORE
+  SALEREP
+  ADMIN
+}
+
+enum ProductType {
+  TYPE1
+  TYPE2
+}
+
+model Account {
+  id        BigInt      @id @default(autoincrement())
+  type      AccountType
+  users     BigInt?
+  store     BigInt?
+  saleRep   BigInt?
+  admin     BigInt?
+  Customers Customer[]
+  Products  Product[]
+  Users     User[]
+  Stores    Stores[]
+}
+
+model Customer {
+  id         BigInt  @id @default(autoincrement())
+  cardNumber String
+  exp        String
+  nameOnCard String
+  address    String
+  city       String
+  state      String
+  county     String
+  accountId  BigInt
+  Account    Account @relation(fields: [accountId], references: [id])
+  Orders     Order[]
+}
+
+model Product {
+  id        BigInt      @id @default(autoincrement())
+  title     String
+  type      ProductType
+  amount    String
+  accountId BigInt
+  Account   Account     @relation(fields: [accountId], references: [id])
+  Orders    Order[]
+}
+
+model User {
+  id              BigInt    @id @default(autoincrement())
+  firstName       String
+  lastName        String
+  email           String
+  password        String
+  isFirstLogin    Boolean
+  lastLogin       DateTime?
+  isActivated     Boolean
+  isTermsAccepted Boolean
+  accountId       BigInt
+  Account         Account   @relation(fields: [accountId], references: [id])
+}
+
+model Stores {
+  id                         BigInt  @id @default(autoincrement())
+  nameOfStore                String  @unique
+  address                    String
+  socialMediaHandles         Json
+  domainName                 String  @unique
+  profilePicture             String
+  accountId                  BigInt
+  Account                    Account @relation(fields: [accountId], references: [id])
+  isRegistered               Boolean
+  businessRegistrationNumber String
+  Orders                     Order[]
+}
+
+model Order {
+  id            BigInt      @id @default(autoincrement())
+  storeId       BigInt
+  amount        String
+  completed     Boolean
+  productId     BigInt
+  transactionId BigInt
+  initiatedDate DateTime
+  completedDate DateTime?
+  customerId    BigInt
+  Stores         Stores     @relation(fields: [storeId], references: [id])
+  Product       Product     @relation(fields: [productId], references: [id])
+  Transaction   Transaction @relation(fields: [transactionId], references: [id])
+  Customer      Customer    @relation(fields: [customerId], references: [id])
+}
+
+model Transaction {
+  id                   BigInt  @id @default(autoincrement())
+  orderId              BigInt
+  mediumOfPayment      String
+  amount               String
+  paymentReferenceCode String
+  paymentCallbackLink  String
+  Order                Order[]
+}
+
+model Newsletter {
+  id     BigInt  @id @default(autoincrement())
+  email  String  @unique
+  status Boolean
+}
